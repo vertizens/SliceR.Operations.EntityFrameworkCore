@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SliceR.Operations.EntityFrameworkCore", "src\SliceR.Operations.EntityFrameworkCore\SliceR.Operations.EntityFrameworkCore.csproj", "{042AD399-2FC4-4BA9-A66A-A4F7D27F72E9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{542A66AA-1C98-4F4A-9152-9846AADA8B4D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A627C6EA-C9F4-40A1-8B3E-C96F1447B58D}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{96A6CAFD-B413-401D-97B5-27CA8A52DB03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SliceR.Operations.EntityFrameworkCore.Tests", "tests\SliceR.Operations.EntityFrameworkCore.Tests\SliceR.Operations.EntityFrameworkCore.Tests.csproj", "{A89FBF1A-C4AD-4506-8EAF-2978F4AAEC5F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{042AD399-2FC4-4BA9-A66A-A4F7D27F72E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{042AD399-2FC4-4BA9-A66A-A4F7D27F72E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{042AD399-2FC4-4BA9-A66A-A4F7D27F72E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{042AD399-2FC4-4BA9-A66A-A4F7D27F72E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A89FBF1A-C4AD-4506-8EAF-2978F4AAEC5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A89FBF1A-C4AD-4506-8EAF-2978F4AAEC5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A89FBF1A-C4AD-4506-8EAF-2978F4AAEC5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A89FBF1A-C4AD-4506-8EAF-2978F4AAEC5F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{042AD399-2FC4-4BA9-A66A-A4F7D27F72E9} = {542A66AA-1C98-4F4A-9152-9846AADA8B4D}
+		{A89FBF1A-C4AD-4506-8EAF-2978F4AAEC5F} = {96A6CAFD-B413-401D-97B5-27CA8A52DB03}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {109AD95B-3970-4C1D-BCBC-18395B0E4DA0}
+	EndGlobalSection
+EndGlobal

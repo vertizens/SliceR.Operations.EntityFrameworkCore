@@ -1,0 +1,41 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - 'main'
+
+env:
+  NuGetDirectory: ${{github.workspace}}/nuget
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test /p:Configuration=Release --no-restore --no-build --verbosity normal
+
+    - name: Pack
+      run: dotnet pack --configuration Release --output ${{env.NuGetDirectory}}
+
+    - name: Publish
+      run: nuget push ${{env.NuGetDirectory}}\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
