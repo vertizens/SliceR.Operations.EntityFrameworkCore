@@ -8,7 +8,7 @@ internal class EntityDomainHandlerRegistrar : IEntityDomainHandlerRegistrar
         if (context.RequestType.IsGenericType && context.RequestType.GetGenericTypeDefinition() == typeof(ByKey<>))
         {
             context.Services.TryAddTransient(
-                typeof(IHandler<>).MakeGenericType(context.RequestType, context.DomainType),
+                typeof(IHandler<,>).MakeGenericType(context.RequestType, context.DomainType),
                 typeof(ByKeyHandler<,,>).MakeGenericType(context.EntityDefinition.KeyType!, context.EntityDefinition.EntityType, context.DomainType));
         }
 
