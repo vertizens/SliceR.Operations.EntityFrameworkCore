@@ -40,6 +40,8 @@ public static class ServiceCollectionExtensions
         services.RemoveAll(typeof(IEntityDefinitionResolver));
         services.TryAddSingleton<IEntityDefinitionResolver>(serviceProvider.GetRequiredService<EntityDefinitionResolver>());
 
+        services.TryAddSingleton<IEntityDomainHandlerRegistrar, EntityDomainHandlerRegistrar>();
+
         return services;
     }
 
@@ -65,12 +67,22 @@ public static class ServiceCollectionExtensions
                     case 1:
                         services.AddKeyHandler(entityClassType, [.. primaryKey.Properties]);
                         services.AddKeySetHandler(entityClassType, primaryKey.Properties[0]);
+
                         services.TryAddTransient(
                             typeof(IHandler<,>).MakeGenericType(typeof(Delete<,>).MakeGenericType(keyType, entityClassType), typeof(bool)),
                             typeof(DeleteHandler<,>).MakeGenericType(keyType, entityClassType));
                         services.TryAddTransient(
                             typeof(IHandler<,>).MakeGenericType(typeof(DeleteSet<,>).MakeGenericType(keyType, entityClassType), typeof(int)),
                             typeof(DeleteSetHandler<,>).MakeGenericType(keyType, entityClassType));
+
+                        object implementationFactory(IServiceProvider serviceProvider)
+                        {
+                            return ActivatorUtilities.CreateInstance(serviceProvider,
+                                typeof(EntityKeyReader<,>).MakeGenericType(keyType, entityClassType),
+                                (ICollection<string>)primaryKey.Properties.Select(p => p.Name).ToArray());
+                        }
+                        services.TryAddSingleton(typeof(IEntityKeyReader<,>).MakeGenericType(keyType, entityClassType), implementationFactory);
+
                         break;
                     default:
                         services.AddKeyHandler(entityClassType, [.. primaryKey.Properties]);

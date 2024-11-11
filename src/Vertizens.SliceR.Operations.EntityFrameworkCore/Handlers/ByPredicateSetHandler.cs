@@ -1,6 +1,4 @@
-﻿using Vertizens.SliceR.Operations;
-
-namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
+﻿namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 public abstract class ByPredicateSetHandler<TFilter, TEntity>(IEntityDbContextResolver _entityDbContextResolver)
     where TEntity : class
 {

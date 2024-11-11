@@ -1,7 +1,4 @@
-﻿using Vertizens.SliceR;
-using Vertizens.SliceR.Operations;
-
-namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
+﻿namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 
 public class InsertSetHandler<TEntity>(IEntityDbContextResolver _entityDbContextResolver) : IHandler<InsertSet<TEntity>, IEnumerable<TEntity>>
     where TEntity : class

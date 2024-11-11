@@ -1,7 +1,4 @@
-﻿using Vertizens.SliceR;
-using Vertizens.SliceR.Operations;
-
-namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
+﻿namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 public class UpdateHandler<TEntity>(IEntityDbContextResolver _entityDbContextResolver) : IHandler<Update<TEntity>, TEntity>
     where TEntity : class
 {

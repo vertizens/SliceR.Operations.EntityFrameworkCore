@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Vertizens.SliceR;
-using Vertizens.SliceR.Operations;
 
 namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 public class DeleteSetHandler<TKey, TEntity>(
