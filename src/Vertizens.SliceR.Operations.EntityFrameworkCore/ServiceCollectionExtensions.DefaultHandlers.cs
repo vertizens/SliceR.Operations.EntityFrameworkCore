@@ -7,6 +7,12 @@ using System.Reflection;
 namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers default implementations for entities found in already registered <see cref="DbContext"/> instances to 
+    /// handle <see cref="NoFilter"/>, <see cref="ByKey{TKey}"/>, <see cref="Insert{TDomain}"/>
+    /// <see cref="Update{TEntity}"/>, <see cref="Delete{TKey, TDomain}"/>.
+    /// </summary>
+    /// <param name="dbContextTypePredicate">Filter to reduce the found set of DbContext implementations</param>
     public static IServiceCollection AddSliceREntityFrameworkCoreDefaultHandlers(this IServiceCollection services, Func<Type, bool>? dbContextTypePredicate = null)
     {
         services.TryAddScoped<IDbContextStartupFactory, EntityDbContextResolver>();

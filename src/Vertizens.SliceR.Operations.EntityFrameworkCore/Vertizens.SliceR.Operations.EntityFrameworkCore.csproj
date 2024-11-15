@@ -14,6 +14,7 @@
 	  <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 	  <PublishRepositoryUrl>true</PublishRepositoryUrl>
 	  <IncludeSymbols>true</IncludeSymbols>
+	  <NoWarn>IDE0130</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,7 +28,7 @@
 	  <PrivateAssets>all</PrivateAssets>
 	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
-	<PackageReference Include="Vertizens.SliceR" Version="0.3.0-rc.1.2" />
+	<PackageReference Include="Vertizens.SliceR" Version="0.3.0-rc.1.3" />
   </ItemGroup>
   <ItemGroup>
 	<None Include="..\..\README.md" Pack="true" PackagePath="\" />
