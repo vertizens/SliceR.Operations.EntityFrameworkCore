@@ -5,6 +5,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 
 namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
+
+/// <summary>
+/// Extensions for a ServiceCollection
+/// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
@@ -12,6 +16,7 @@ public static class ServiceCollectionExtensions
     /// handle <see cref="NoFilter"/>, <see cref="ByKey{TKey}"/>, <see cref="Insert{TDomain}"/>
     /// <see cref="Update{TEntity}"/>, <see cref="Delete{TKey, TDomain}"/>.
     /// </summary>
+    /// <param name="services">Service Collection</param>
     /// <param name="dbContextTypePredicate">Filter to reduce the found set of DbContext implementations</param>
     public static IServiceCollection AddSliceREntityFrameworkCoreDefaultHandlers(this IServiceCollection services, Func<Type, bool>? dbContextTypePredicate = null)
     {

@@ -14,6 +14,8 @@
 	  <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 	  <PublishRepositoryUrl>true</PublishRepositoryUrl>
 	  <IncludeSymbols>true</IncludeSymbols>
+	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  <PackageIcon>icon.png</PackageIcon>	
 	  <NoWarn>IDE0130</NoWarn>
   </PropertyGroup>
 
@@ -32,6 +34,7 @@
   </ItemGroup>
   <ItemGroup>
 	<None Include="..\..\README.md" Pack="true" PackagePath="\" />
-	  <InternalsVisibleTo Include="Vertizens.SliceR.Operations.EntityFrameworkCore.Tests" />
+	<None Include="..\..\icon.png" Pack="true" PackagePath="\" />
+	<InternalsVisibleTo Include="Vertizens.SliceR.Operations.EntityFrameworkCore.Tests" />
   </ItemGroup>
 </Project>
