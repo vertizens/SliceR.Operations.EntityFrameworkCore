@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Reflection;
 
 namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 
@@ -154,9 +153,7 @@ public static class ServiceCollectionExtensions
         }
         else
         {
-            var createMethod = typeof(ValueTuple).GetMethod(nameof(ValueTuple.Create), BindingFlags.Static | BindingFlags.Public, propertyTypes);
-            var keyCreateMethod = createMethod!.MakeGenericMethod(propertyTypes);
-            keyType = keyCreateMethod.ReturnType;
+            keyType = typeof(ValueTuple<,>).MakeGenericType(propertyTypes);
         }
 
         return keyType;
