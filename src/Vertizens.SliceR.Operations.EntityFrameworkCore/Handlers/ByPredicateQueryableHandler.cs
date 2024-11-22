@@ -19,7 +19,7 @@ public abstract class ByPredicateQueryableHandler<TFilter, TEntity>(IEntityDbCon
     {
         var dbContext = EntityDbContextResolver.Resolve<TEntity>();
         var lambda = request.CreateFilterExpression();
-        return Task.FromResult(dbContext.Set<TEntity>().Where(lambda).AsQueryable());
+        return Task.FromResult(dbContext.Set<TEntity>().Where(lambda));
     }
 }
 
@@ -47,6 +47,6 @@ public abstract class ByPredicateQueryableHandler<TFilter, TEntity, TDomain>(
     {
         var dbContext = EntityDbContextResolver.Resolve<TEntity>();
         var lambda = request.CreateFilterExpression();
-        return Task.FromResult(dbContext.Set<TEntity>().Where(lambda).Select(_typeProjector.GetProjection()).AsQueryable());
+        return Task.FromResult(dbContext.Set<TEntity>().Where(lambda).Select(_typeProjector.GetProjection()));
     }
 }
