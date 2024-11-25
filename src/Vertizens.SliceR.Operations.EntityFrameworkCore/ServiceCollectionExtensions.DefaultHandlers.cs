@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<EntityDefinitionResolver>();
         services.TryAddSingleton<IEntityDefinitionResolverCache>(sp => sp.GetRequiredService<EntityDefinitionResolver>());
         services.TryAddSingleton<IEntityDefinitionResolver>(sp => sp.GetRequiredService<EntityDefinitionResolver>());
+        services.TryAddSingleton(typeof(IRelatedEntityQueryInclude<,>), typeof(DefaultRelatedEntityQueryInclude<,>));
 
         IServiceProvider serviceProvider = services.BuildServiceProvider();
         serviceProvider = serviceProvider.CreateScope().ServiceProvider;

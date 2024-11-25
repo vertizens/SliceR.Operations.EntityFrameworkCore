@@ -18,5 +18,13 @@ internal class EntityDomainHandlerRegistrar : IEntityDomainHandlerRegistrar
                 typeof(IHandler<,>).MakeGenericType(context.RequestType, context.ResultType),
                 typeof(NoFilterQueryableHandler<,>).MakeGenericType(context.EntityDefinition.EntityType, context.DomainType));
         }
+
+        if (context.RequestType.IsGenericType && context.RequestType.GetGenericTypeDefinition() == typeof(Update<,>))
+        {
+            var updateDomainType = context.RequestType.GetGenericArguments()[1];
+            context.Services.TryAddTransient(
+                typeof(IHandler<,>).MakeGenericType(typeof(ByKeyForUpdate<,>).MakeGenericType(context.EntityDefinition.KeyType!, updateDomainType), context.EntityDefinition.EntityType),
+                typeof(ByKeyForUpdateHandler<,,>).MakeGenericType(context.EntityDefinition.KeyType!, updateDomainType, context.EntityDefinition.EntityType));
+        }
     }
 }
