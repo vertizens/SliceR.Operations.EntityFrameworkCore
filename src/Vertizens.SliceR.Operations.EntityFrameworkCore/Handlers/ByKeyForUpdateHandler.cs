@@ -9,11 +9,11 @@ namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 /// <typeparam name="TEntity">The entity type</typeparam>
 /// <typeparam name="TUpdateDomain">The domain that will map to the entity</typeparam>
 /// <param name="_entityDbContextResolver">The entity db context resolver.</param>
-/// <param name="_entityKeyExpressionBuilder">The entity key expression builder.</param>
+/// <param name="_keyPredicate">The key predicate expression builder.</param>
 /// <param name="_queryInclude">The resolved includes needed for an update when <typeparamref name="TUpdateDomain"/> maps to <typeparamref name="TEntity"/></param>
 public class ByKeyForUpdateHandler<TKey, TUpdateDomain, TEntity>(
     IEntityDbContextResolver _entityDbContextResolver,
-    IEntityKeyExpressionBuilder<TKey, TEntity> _entityKeyExpressionBuilder,
+    IKeyPredicate<TKey, TEntity> _keyPredicate,
     IRelatedEntityQueryInclude<TUpdateDomain, TEntity> _queryInclude
     )
     : IHandler<ByKeyForUpdate<TKey, TUpdateDomain>, TEntity?>
@@ -27,8 +27,8 @@ public class ByKeyForUpdateHandler<TKey, TUpdateDomain, TEntity>(
     public async Task<TEntity?> Handle(ByKeyForUpdate<TKey, TUpdateDomain> request, CancellationToken cancellationToken = default)
     {
         var dbContext = _entityDbContextResolver.Resolve<TEntity>();
-        var keyExpression = _entityKeyExpressionBuilder.Build();
-        var filterExpression = (new ByPredicate<TKey, TEntity>(request.Key, keyExpression)).CreateFilterExpression();
+        var keyExpression = _keyPredicate.GetPredicate();
+        var filterExpression = new ByPredicate<TKey, TEntity>(request.Key, keyExpression).CreateFilterExpression();
         var query = dbContext.Set<TEntity>().Where(filterExpression);
 
         var includes = _queryInclude.GetIncludes();

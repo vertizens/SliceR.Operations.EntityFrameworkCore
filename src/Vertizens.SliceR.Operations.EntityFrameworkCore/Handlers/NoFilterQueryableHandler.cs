@@ -1,4 +1,5 @@
-﻿using Vertizens.TypeMapper;
+﻿using Microsoft.EntityFrameworkCore;
+using Vertizens.TypeMapper;
 
 namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 
@@ -17,11 +18,10 @@ public class NoFilterQueryableHandler<TEntity>(
     /// </summary>
     /// <param name="request">The request.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns><![CDATA[Task<IQueryable<TEntity>>]]></returns>
     public Task<IQueryable<TEntity>> Handle(NoFilter request, CancellationToken cancellationToken = default)
     {
         var dbContext = _entityDbContextResolver.Resolve<TEntity>();
-        return Task.FromResult(dbContext.Set<TEntity>().AsQueryable());
+        return Task.FromResult(dbContext.Set<TEntity>().AsQueryable().AsNoTracking());
     }
 }
 

@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Reflection;
+using Vertizens.ServiceProxy;
 
 namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 
@@ -19,13 +21,16 @@ public static class ServiceCollectionExtensions
     /// <param name="dbContextTypePredicate">Filter to reduce the found set of DbContext implementations</param>
     public static IServiceCollection AddSliceREntityFrameworkCoreDefaultHandlers(this IServiceCollection services, Func<Type, bool>? dbContextTypePredicate = null)
     {
+        services.AddInterfaceTypes(typeof(IKeyPredicate<,>), Assembly.GetCallingAssembly(), ServiceLifetime.Singleton);
         services.TryAddScoped<IDbContextStartupFactory, EntityDbContextResolver>();
         services.TryAddScoped<IEntityDbContextResolver, EntityDbContextResolver>();
         services.TryAddSingleton<IEntityDbContextResolverCache, EntityDbContextResolverCache>();
         services.TryAddSingleton<EntityDefinitionResolver>();
         services.TryAddSingleton<IEntityDefinitionResolverCache>(sp => sp.GetRequiredService<EntityDefinitionResolver>());
         services.TryAddSingleton<IEntityDefinitionResolver>(sp => sp.GetRequiredService<EntityDefinitionResolver>());
+        services.TryAddSingleton(typeof(IEntityKeyReader<,>), typeof(EntityKeyReader<,>));
         services.TryAddSingleton(typeof(IRelatedEntityQueryInclude<,>), typeof(DefaultRelatedEntityQueryInclude<,>));
+        services.TryAddTransient(typeof(IKeyPredicateExpressionBuilder<,>), typeof(DefaultKeyPredicateExpressionBuilder<,>));
 
         IServiceProvider serviceProvider = services.BuildServiceProvider();
         serviceProvider = serviceProvider.CreateScope().ServiceProvider;
@@ -37,10 +42,11 @@ public static class ServiceCollectionExtensions
             dbContextTypes = dbContextTypes.Where(dbContextTypePredicate);
         }
         var entityTypes = startupFactory.GetEntityTypes(dbContextTypes);
+        var keyPredicateServices = services.Where(x => x.ServiceType.IsGenericTypeDefinition && x.ServiceType.GetGenericTypeDefinition() == typeof(IKeyPredicate<,>)).ToList();
 
         foreach (var entityType in entityTypes)
         {
-            services.AddDefaultHandlers(entityType, serviceProvider);
+            services.AddDefaultHandlers(entityType, keyPredicateServices, serviceProvider);
         }
 
         services.RemoveAll(typeof(IDbContextStartupFactory));
@@ -56,7 +62,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    private static IServiceCollection AddDefaultHandlers(this IServiceCollection services, IEntityType entityType, IServiceProvider serviceProvider)
+    private static IServiceCollection AddDefaultHandlers(this IServiceCollection services, IEntityType entityType, IList<ServiceDescriptor> keyPredicateServices, IServiceProvider serviceProvider)
     {
         var entityClassType = entityType.ClrType;
 
@@ -72,37 +78,17 @@ public static class ServiceCollectionExtensions
             Type? keyType = null;
             if (primaryKey != null)
             {
-                keyType = GetKeyType([.. primaryKey.Properties]);
-                switch (primaryKey.Properties.Count)
+                keyType = services.GetKeyType(keyPredicateServices, entityClassType, [.. primaryKey.Properties]);
+                if (keyType != null)
                 {
-                    case 1:
-                        services.AddKeyHandler(entityClassType, [.. primaryKey.Properties]);
-                        services.AddKeySetHandler(entityClassType, primaryKey.Properties[0]);
+                    services.AddKeyHandler(keyType, entityClassType);
 
-                        services.TryAddTransient(
-                            typeof(IHandler<,>).MakeGenericType(typeof(Delete<,>).MakeGenericType(keyType, entityClassType), typeof(bool)),
-                            typeof(DeleteHandler<,>).MakeGenericType(keyType, entityClassType));
-                        services.TryAddTransient(
-                            typeof(IHandler<,>).MakeGenericType(typeof(DeleteSet<,>).MakeGenericType(keyType, entityClassType), typeof(int)),
-                            typeof(DeleteSetHandler<,>).MakeGenericType(keyType, entityClassType));
-
-                        object implementationFactory(IServiceProvider serviceProvider)
-                        {
-                            return ActivatorUtilities.CreateInstance(serviceProvider,
-                                typeof(EntityKeyReader<,>).MakeGenericType(keyType, entityClassType),
-                                (ICollection<string>)primaryKey.Properties.Select(p => p.Name).ToArray());
-                        }
-                        services.TryAddSingleton(typeof(IEntityKeyReader<,>).MakeGenericType(keyType, entityClassType), implementationFactory);
-
-                        break;
-                    default:
-                        services.AddKeyHandler(entityClassType, [.. primaryKey.Properties]);
-                        services.TryAddTransient(
-                            typeof(IHandler<,>).MakeGenericType(typeof(Delete<,>)
-                            .MakeGenericType(keyType, entityClassType), typeof(bool)),
-                            typeof(DeleteHandler<,>).MakeGenericType(keyType, entityClassType));
-                        keyType = null;
-                        break;
+                    services.TryAddTransient(
+                        typeof(IHandler<,>).MakeGenericType(typeof(Delete<,>).MakeGenericType(keyType, entityClassType), typeof(bool)),
+                        typeof(DeleteHandler<,>).MakeGenericType(keyType, entityClassType));
+                    services.TryAddTransient(
+                        typeof(IHandler<,>).MakeGenericType(typeof(DeleteSet<,>).MakeGenericType(keyType, entityClassType), typeof(int)),
+                        typeof(DeleteSetHandler<,>).MakeGenericType(keyType, entityClassType));
                 }
             }
 
@@ -126,58 +112,36 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    private static IServiceCollection AddKeyHandler(this IServiceCollection services, Type entityClassType, IList<IProperty> properties)
+    private static IServiceCollection AddKeyHandler(this IServiceCollection services, Type keyType, Type entityClassType)
     {
-        Type keyType = GetKeyType(properties);
-        var expressionBuilderInterfaceType = typeof(IEntityKeyExpressionBuilder<,>).MakeGenericType(keyType, entityClassType);
-        var expressionBuilderImplementationType = typeof(EntityKeyExpressionBuilder<,>).MakeGenericType(keyType, entityClassType);
-        object implementationFactory(IServiceProvider serviceProvider)
-        {
-            return ActivatorUtilities.CreateInstance(serviceProvider, expressionBuilderImplementationType, (ICollection<string>)properties.Select(p => p.Name).ToArray());
-        }
-        services.TryAddSingleton(expressionBuilderInterfaceType, implementationFactory);
-
         var byKeyType = typeof(ByKey<>).MakeGenericType(keyType);
         var handlerType = typeof(ByKeyHandler<,>).MakeGenericType(keyType, entityClassType);
-        services.TryAddTransient(MakeHandler(byKeyType, entityClassType), handlerType);
+        services.TryAddTransient(typeof(IHandler<,>).MakeGenericType(byKeyType, entityClassType), handlerType);
 
         return services;
     }
 
-    private static Type GetKeyType(IList<IProperty> properties)
+    private static Type? GetKeyType(this IServiceCollection services, IList<ServiceDescriptor> keyPredicateServices, Type entityClassType, IList<IProperty> properties)
     {
+        Type? keyType = null;
         var propertyTypes = properties.Select(p => p.ClrType).ToArray();
-        Type keyType;
-        if (propertyTypes.Length == 1)
+        var entityKeyPredicateService = keyPredicateServices.FirstOrDefault(x => x.ServiceType.GetGenericArguments()[1] == entityClassType);
+        if (entityKeyPredicateService != null)
         {
-            keyType = properties.First().ClrType;
+            keyType = entityKeyPredicateService.ServiceType.GetGenericArguments()[0];
         }
-        else
+        else if (propertyTypes.Length == 1)
         {
-            keyType = typeof(ValueTuple<,>).MakeGenericType(propertyTypes);
+            keyType = propertyTypes[0];
+            var expressionBuilderInterfaceType = typeof(IKeyPredicate<,>).MakeGenericType(keyType, entityClassType);
+            var expressionBuilderImplementationType = typeof(PropertyKeyPredicate<,>).MakeGenericType(keyType, entityClassType);
+            object implementationFactory(IServiceProvider serviceProvider)
+            {
+                return ActivatorUtilities.CreateInstance(serviceProvider, expressionBuilderImplementationType, properties.First().Name);
+            }
+            services.TryAddSingleton(expressionBuilderInterfaceType, implementationFactory);
         }
 
         return keyType;
-    }
-
-    private static IServiceCollection AddKeySetHandler(this IServiceCollection services, Type entityClassType, IProperty property)
-    {
-        var expressionBuilderInterfaceType = typeof(IEntityKeySetExpressionBuilder<,>).MakeGenericType(property.ClrType, entityClassType);
-        var expressionBuilderImplementationType = typeof(EntityKeySetExpressionBuilder<,>).MakeGenericType(property.ClrType, entityClassType);
-        object implementationFactory(IServiceProvider serviceProvider)
-        {
-            return ActivatorUtilities.CreateInstance(serviceProvider, expressionBuilderImplementationType, property.Name);
-        }
-        services.TryAddSingleton(expressionBuilderInterfaceType, implementationFactory);
-
-        var handlerType = typeof(ByKeySetHandler<,>).MakeGenericType(property.ClrType, entityClassType);
-        services.TryAddTransient(MakeHandler(typeof(ByKeySet<>).MakeGenericType(property.ClrType), typeof(IQueryable<>).MakeGenericType(entityClassType)), handlerType);
-
-        return services;
-    }
-
-    private static Type MakeHandler(Type requestType, Type resultType)
-    {
-        return typeof(IHandler<,>).MakeGenericType(requestType, resultType);
     }
 }

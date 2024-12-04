@@ -19,5 +19,10 @@ internal class QueryDbContext(DbContextOptions<QueryDbContext> options) : DbCont
         {
             x.ToTable(nameof(GrandChildEntity));
         });
+
+        modelBuilder.Entity<CompoundKeyEntity>(x =>
+        {
+            x.ToTable(nameof(CompoundKeyEntity));
+        });
     }
 }
