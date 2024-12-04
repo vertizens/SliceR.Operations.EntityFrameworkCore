@@ -4,14 +4,14 @@ using System.Reflection;
 namespace Vertizens.SliceR.Operations.EntityFrameworkCore;
 internal class DefaultKeyPredicateExpressionBuilder<TKey, TEntity> : IKeyPredicateExpressionBuilder<TKey, TEntity>
 {
-    private readonly ParameterExpression parameterKey = Expression.Parameter(typeof(TKey), "key");
-    private readonly ParameterExpression parameterEntity = Expression.Parameter(typeof(TEntity), "entity");
+    private readonly ParameterExpression _parameterKey = Expression.Parameter(typeof(TKey), "key");
+    private readonly ParameterExpression _parameterEntity = Expression.Parameter(typeof(TEntity), "entity");
     private readonly IList<Expression> _expressions = [];
 
     public IKeyPredicateExpressionBuilder<TKey, TEntity> Equal<T>(Expression<Func<TEntity, T>> propertySelector, Expression<Func<TKey, T>> valueSelector)
     {
-        var propertyExpression = ReplaceParameterExpressionVisitor.ReplaceParameter(propertySelector.Body, propertySelector.Parameters[0], parameterEntity);
-        var valueExpression = ReplaceParameterExpressionVisitor.ReplaceParameter(valueSelector.Body, valueSelector.Parameters[0], parameterKey);
+        var propertyExpression = ReplaceParameterExpressionVisitor.ReplaceParameter(propertySelector.Body, propertySelector.Parameters[0], _parameterEntity);
+        var valueExpression = ReplaceParameterExpressionVisitor.ReplaceParameter(valueSelector.Body, valueSelector.Parameters[0], _parameterKey);
         var propertyAssignment = Expression.Equal(propertyExpression, valueExpression);
         _expressions.Add(propertyAssignment);
 
@@ -27,7 +27,7 @@ internal class DefaultKeyPredicateExpressionBuilder<TKey, TEntity> : IKeyPredica
         {
             if (entityGetProperties.TryGetValue(keyGetProperty.Name, out var entityGetProperty))
             {
-                var expression = BuildPropertyEqual(parameterKey, keyGetProperty, entityGetProperty);
+                var expression = BuildPropertyEqual(keyGetProperty, entityGetProperty);
                 if (expression != null)
                 {
                     _expressions.Add(expression);
@@ -51,29 +51,29 @@ internal class DefaultKeyPredicateExpressionBuilder<TKey, TEntity> : IKeyPredica
             }
         }
 
-        return Expression.Lambda<Func<TEntity, TKey, bool>>(bodyExpression, parameterKey, parameterEntity);
+        return Expression.Lambda<Func<TEntity, TKey, bool>>(bodyExpression, _parameterEntity, _parameterKey);
     }
 
-    private static BinaryExpression? BuildPropertyEqual(ParameterExpression parameterKey, PropertyInfo keyGetProperty, PropertyInfo entityGetProperty)
+    private BinaryExpression? BuildPropertyEqual(PropertyInfo keyGetProperty, PropertyInfo entityGetProperty)
     {
         BinaryExpression? expression = null;
         if (entityGetProperty.PropertyType.IsAssignableFrom(keyGetProperty.PropertyType))
         {
-            expression = BuildAssignablePropertyEqual(parameterKey, keyGetProperty, entityGetProperty);
+            expression = BuildAssignablePropertyEqual(keyGetProperty, entityGetProperty);
         }
 
         return expression;
     }
 
-    private static BinaryExpression BuildAssignablePropertyEqual(ParameterExpression parameterKey, PropertyInfo keyGetProperty, PropertyInfo entityGetProperty)
+    private BinaryExpression BuildAssignablePropertyEqual(PropertyInfo keyGetProperty, PropertyInfo entityGetProperty)
     {
-        Expression sourceProperty = Expression.Property(parameterKey, keyGetProperty);
-        Expression targetProperty = Expression.Property(parameterKey, entityGetProperty);
+        Expression keyProperty = Expression.Property(_parameterKey, keyGetProperty);
+        Expression entityProperty = Expression.Property(_parameterEntity, entityGetProperty);
         if (keyGetProperty.PropertyType != entityGetProperty.PropertyType)
         {
-            sourceProperty = Expression.ConvertChecked(sourceProperty, entityGetProperty.PropertyType);
+            keyProperty = Expression.ConvertChecked(keyProperty, entityGetProperty.PropertyType);
         }
-        var propertyBinding = Expression.Equal(targetProperty, sourceProperty);
+        var propertyBinding = Expression.Equal(entityProperty, keyProperty);
 
         return propertyBinding;
     }
