@@ -81,42 +81,26 @@ public static class ServiceCollectionExtensions
                 keyType = services.GetKeyType(keyPredicateServices, entityClassType, [.. primaryKey.Properties]);
                 if (keyType != null)
                 {
-                    services.AddKeyHandler(keyType, entityClassType);
+                    services.TryAddTransient(
+                        typeof(IHandler<,>).MakeGenericType(typeof(ByKey<>).MakeGenericType(keyType), entityClassType),
+                        typeof(ByKeyHandler<,>).MakeGenericType(keyType, entityClassType));
 
                     services.TryAddTransient(
                         typeof(IHandler<,>).MakeGenericType(typeof(Delete<,>).MakeGenericType(keyType, entityClassType), typeof(bool)),
                         typeof(DeleteHandler<,>).MakeGenericType(keyType, entityClassType));
-                    services.TryAddTransient(
-                        typeof(IHandler<,>).MakeGenericType(typeof(DeleteSet<,>).MakeGenericType(keyType, entityClassType), typeof(int)),
-                        typeof(DeleteSetHandler<,>).MakeGenericType(keyType, entityClassType));
                 }
             }
 
             services.TryAddTransient(
                 typeof(IHandler<,>).MakeGenericType(typeof(Insert<>).MakeGenericType(entityClassType), entityClassType),
                 typeof(InsertHandler<>).MakeGenericType(entityClassType));
-            services.TryAddTransient(
-                typeof(IHandler<,>).MakeGenericType(typeof(InsertSet<>).MakeGenericType(entityClassType), typeof(IEnumerable<>).MakeGenericType(entityClassType)),
-                typeof(InsertSetHandler<>).MakeGenericType(entityClassType));
 
             services.TryAddTransient(
                 typeof(IHandler<,>).MakeGenericType(typeof(Update<>).MakeGenericType(entityClassType), entityClassType),
                 typeof(UpdateHandler<>).MakeGenericType(entityClassType));
-            services.TryAddTransient(
-                typeof(IHandler<,>).MakeGenericType(typeof(UpdateSet<>).MakeGenericType(entityClassType), typeof(IEnumerable<>).MakeGenericType(entityClassType)),
-                typeof(UpdateSetHandler<>).MakeGenericType(entityClassType));
 
             entityDefinitionCache.SetEntityDefinition(new EntityDefinition { EntityType = entityClassType, KeyType = keyType });
         }
-
-        return services;
-    }
-
-    private static IServiceCollection AddKeyHandler(this IServiceCollection services, Type keyType, Type entityClassType)
-    {
-        var byKeyType = typeof(ByKey<>).MakeGenericType(keyType);
-        var handlerType = typeof(ByKeyHandler<,>).MakeGenericType(keyType, entityClassType);
-        services.TryAddTransient(typeof(IHandler<,>).MakeGenericType(byKeyType, entityClassType), handlerType);
 
         return services;
     }
