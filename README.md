@@ -1,6 +1,6 @@
 # SliceR.Operations.EntityFrameworkCore
 
-Adds to SliceR .NET EntityFramework Core boilerplate functionality for working with entities
+Adds EntityFramework Core boilerplate functionality for working with entities to SliceR.
 
 ## Getting Started
 
@@ -32,4 +32,30 @@ Use it by injecting: `IHandler<Delete<TKey, TEntity>, bool>` into your handler. 
 If you have custom queries or multiple operations that need to take place in the same handler simply create a custom handler.  Inject the DbContext like normal or possibly use `IEntityDbContextResolver` if you have multiple DbContext and don't want to hardcode which DbContext it is defined in.  
 Make sure to register custom handlers first with:
 
-    services.AddSlicerRHandllers();
+    services.AddSlicerRHandlers();
+
+## Keys
+
+When registering handlers, the code looks for a registered service type of `IKeyPredicate<,>` where the 
+second generic type is the entity.  If found then the first generic type must be the key type to be used.
+By implementing `IKeyPredicate` then it takes over the definition of what key an entity uses and provides a way
+to get an entity and match the key with its expression definiton.  The `GetPredicate` method returns 
+`Expression<Func<TEntity, TKey, bool>>`.  If not specifically implemented and the entity primary key is only 
+one property then the key is assumed to be the type of that one property.  If the key is has multiple properties,
+ie compound key, then no key based handlers are registered unless the IKeyPredicate is registered.
+
+## Domain and Minimal APIs
+
+If the code is also using Minimal API or just rolling its own handlers for using this library with domain projection
+then an implementation of `IEntityDomainHandlerRegistrar` is registered.  This allows this library to respond to 
+Entity/Domain combinations by also registering any handlers required for returning domain instead of an entity.
+Examples are:
+
+* NoFilterQueryableHandler<TEntity, TDomain>
+* ByKeyHandler<TKey, TEntity, TDomain>
+* ByKeyForUpdateHandler<TKey, TUpdateDomain, TEntity>
+
+There reason `ByKeyForUpdateHandler` exists is the special case where we want to get the existing entity and map onto to it
+from TUpdateDomain and that could also mean any relationships and treat the entity as a graph update. 
+There is special code that looks at the mapping of TUpdateDomain to TEntity and adds any `Includes` to the 
+queryable getting the existing TEntity so it can be mapped to and allow EF Core to update relationships instances.
